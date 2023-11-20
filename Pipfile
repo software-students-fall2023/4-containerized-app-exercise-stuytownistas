@@ -8,6 +8,7 @@ pylint = "*"
 black = "*"
 openai-whisper = "*"
 ffmpeg = "*"
+flask = "*"
 
 [dev-packages]
 
