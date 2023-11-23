@@ -1,6 +1,23 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import whisper
 
+from pymongo import MongoClient
+
+# Connect to the MongoDB instance running on the host machine
+client = MongoClient("mongodb://localhost:27117/")
+
+client = MongoClient()
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)
+
+# Access the database (replace 'your_database' with the actual name)
+db = client['whisper_db']
+audio_collection = db.audio_collection
+
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
