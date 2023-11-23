@@ -1,5 +1,7 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file
 import whisper
+from gridfs import GridFS
+import io
 
 from pymongo import MongoClient
 
@@ -15,10 +17,22 @@ except Exception as e:
 
 # Access the database (replace 'your_database' with the actual name)
 db = client['whisper_db']
+fs = GridFS(db)
 audio_collection = db.audio_collection
 
 
 app = Flask(__name__)
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    audio_blob = request.files['file']
+    audio_id = fs.put(audio_blob, filename='audio.wav', content_type='audio/wav')
+    return jsonify({'audio_id': str(audio_id)})
+
+@app.route('/get_audio/<audio_id>')
+def get_audio(audio_id):
+    audio_data = fs.get(audio_id)
+    return send_file(io.BytesIO(audio_data.read()), mimetype='audio/wav', as_attachment=True, download_name='audio.wav')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
