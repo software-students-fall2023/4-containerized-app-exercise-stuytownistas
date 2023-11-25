@@ -60,8 +60,15 @@
     <input type="file" id="audioUpload" accept="audio/*">
     <button id="submitAudio">Submit Audio</button>
 
-    <div id="transcriptionBox"></div> <!-- Text box for transcription -->
-
+    <!-- Transcription box to display the transcribed text -->
+    <div id="transcriptionBox">
+        <!-- Display the transcription result passed from Flask -->
+        {% if transcription %}
+            <p>{{ transcription }}</p>
+        {% else %}
+            <p>Transcription will appear here...</p>
+        {% endif %}
+    </div>
     <script>
         let mediaRecorder;
         let audioChunks = [];
