@@ -1,3 +1,4 @@
+"""This module handles the machine learning aspects using Whisper model."""
 import ssl
 import whisper
 
