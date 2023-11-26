@@ -8,7 +8,7 @@ from pymongo import MongoClient
 # Connect to the MongoDB instance running on the host machine
 client = MongoClient("mongodb://localhost:27117/")
 
-client = MongoClient()
+# client = MongoClient()
 try:
     client.admin.command('ping')
     print("Pinged your deployment. You successfully connected to MongoDB!")
