@@ -6,7 +6,10 @@ import io
 from pymongo import MongoClient
 
 # Connect to the MongoDB instance running on the host machine
-client = MongoClient("mongodb://localhost:27117/")
+# client = MongoClient('localhost', 27017)
+mongo_uri = "mongodb://mongodb:27017/stuyTownistas"
+client = MongoClient(mongo_uri)
+db = client.get_database()
 
 # client = MongoClient()
 try:
@@ -57,4 +60,4 @@ def index():
     return render_template('webpage.html', transcription=transcription)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
