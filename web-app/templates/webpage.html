@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Record Audio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #e0f2f1; /* Light teal background */
+            color: #263238; /* Dark grey text color for contrast */
+        }
+
+        h1 {
+            color: #37474f; /* Slightly darker grey for headings */
+        }
+
+        button, input[type="file"] {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #26a69a; /* Teal background for buttons */
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover, input[type="file"]:hover {
+            background-color: #00796b; /* Darker shade on hover */
+        }
+
+        #transcriptionBox {
+            width: 60%;
+            margin: 30px auto;
+            padding: 20px;
+            border: 1px solid #b2dfdb; /* Light teal border */
+            border-radius: 8px;
+            background-color: #ffffff; /* White background for the text box */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+            display: block; /* Make it always visible */
+            word-wrap: break-word;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            #transcriptionBox {
+                width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Record or Upload Audio</h1>
+    <button id="startRecord">Start Recording</button>
+    <button id="stopRecord" disabled>Stop Recording</button>
+    <audio id="audioPlayback" controls></audio>
+    <input type="file" id="audioUpload" accept="audio/*">
+    <button id="submitAudio">Submit Audio</button>
+
+    <!-- Transcription box to display the transcribed text -->
+    <div id="transcriptionBox">
+        <!-- Display the transcription result passed from Flask -->
+        {% if transcription %}
+            <p>{{ transcription }}</p>
+        {% else %}
+            <p>Transcription will appear here...</p>
+        {% endif %}
+    </div>
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById("startRecord").onclick = function () {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = e => {
+                        const audioBlob = new Blob(audioChunks);
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        document.getElementById("audioPlayback").src = audioUrl;
+                    };
+                    mediaRecorder.start();
+                    document.getElementById("startRecord").disabled = true;
+                    document.getElementById("stopRecord").disabled = false;
+                });
+        };
+
+        document.getElementById("stopRecord").onclick = function () {
+            mediaRecorder.stop();
+            document.getElementById("stopRecord").disabled = true;
+            document.getElementById("startRecord").disabled = false;
+        };
+
+        document.getElementById("submitAudio").onclick = function () {
+            const audioElement = document.getElementById("audioPlayback");
+            fetch(audioElement.src)
+                .then(response => response.blob())
+                .then(blob => {
+                    const formData = new FormData();
+                    formData.append("file", blob, "audio.wav");
+
+                    fetch("/upload", { method: "POST", body: formData })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById("transcriptionBox").textContent = data.transcription;
+                        })
+                        .catch(error => console.error("Error:", error));
+                });
+        };
+    </script>
+</body>
+</html>
