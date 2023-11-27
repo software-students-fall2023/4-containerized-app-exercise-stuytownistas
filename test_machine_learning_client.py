@@ -1,35 +1,23 @@
 import os
-import tempfile
 import pytest
-from flask.testing import FlaskClient
-from machine_learning_client.whisper_model import app
+from unittest.mock import patch, Mock
+from whisper_module import base_model
 
-@pytest.fixture
-def client():
-    app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+def test_transcribe_success():
+    with patch('whisper.load_model', return_value=Mock(transcribe=Mock(return_value={"text": "Test transcription"}))):
+        result = base_model.transcribe("test_audio.wav")
+    
+    assert result == {"text": "Test transcription"}
 
-def test_index_get(client: FlaskClient):
-    response = client.get('/')
-    assert response.status_code == 200
-    assert b'<!DOCTYPE html>' in response.data
+def test_transcribe_failure():
+    with patch('whisper.load_model', side_effect=Exception("Model loading failed")):
+        with pytest.raises(Exception, match="Model loading failed"):
+            base_model.transcribe("test_audio.wav")
 
-def test_index_post_no_file(client: FlaskClient):
-    response = client.post('/')
-    assert response.status_code == 400
-    assert b'No file part' in response.data
-
-def test_index_post_no_selected_file(client: FlaskClient):
-    response = client.post('/', data=dict(file='', method='POST'))
-    assert response.status_code == 400
-    assert b'No selected file' in response.data
-
-def test_index_post_with_file(client: FlaskClient):
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-        response = client.post('/', data={'file': (temp_file, 'test.wav')})
-        assert response.status_code == 200
-        assert b'<!DOCTYPE html>' in response.data
-        assert b'Transcription: ' in response.data
-
-    os.unlink(temp_file.name)
+def test_main_function():
+    with patch('whisper.load_model', return_value=Mock(transcribe=Mock(return_value={"text": "Test transcription"}))):
+        with patch('builtins.print') as mock_print:
+            with patch('ssl._create_unverified_context', return_value=ssl.SSLContext()):
+                from your_module import main_function
+                main_function("/path/to/audio/file.wav")
+                mock_print.assert_called_with("Test transcription")
