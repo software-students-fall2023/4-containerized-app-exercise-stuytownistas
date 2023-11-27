@@ -18,6 +18,6 @@ EXPOSE 5001
 ENV MONGO_URI=""
 
 # Run app.py when the container launches
-# CMD ["python", "web_app.py"]
+# CMD ["python", "web_app.py"] sdfsf
 CMD ["python", "web_app.py"]
 

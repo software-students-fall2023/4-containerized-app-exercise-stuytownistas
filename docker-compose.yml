@@ -14,7 +14,7 @@ services:
       context: ./web-app
     container_name: my-flask-app-container
     ports:
-      - "5001:5000"
+      - "5001:5001"
     depends_on:
       - mongodb
     environment:
