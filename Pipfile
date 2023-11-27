@@ -8,9 +8,9 @@ pylint = "*"
 black = "*"
 openai-whisper = "*"
 ffmpeg = "*"
-whisper = "*"
 flask = "1.1.2"
 itsdangerous = "2.0.1"
+pytest = "*"
 
 [dev-packages]
 
