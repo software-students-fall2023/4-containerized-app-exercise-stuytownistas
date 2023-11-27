@@ -1,28 +1,14 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file
+from flask import Flask, request, jsonify, render_template, send_file
 import whisper
 from gridfs import GridFS
 import io
-
 from pymongo import MongoClient
 
-# Connect to the MongoDB instance running on the host machine
-# client = MongoClient('localhost', 27017)
+# MongoDB URI and Connection
 mongo_uri = "mongodb://mongodb:27017/stuyTownistas"
 client = MongoClient(mongo_uri)
-db = client.get_database()
-
-# client = MongoClient()
-try:
-    client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
-
-# Access the database (replace 'your_database' with the actual name)
-db = client['whisper_db']
+db = client.get_database('whisper_db')
 fs = GridFS(db)
-audio_collection = db.audio_collection
-
 
 app = Flask(__name__)
 
@@ -41,21 +27,20 @@ def get_audio(audio_id):
 def index():
     transcription = ''
     if request.method == 'POST':
-        if 'file' not in request.files:
-            return 'No file part', 400
-
-        file = request.files['file']
-        if file.filename == '':
-            return 'No selected file', 400
-
-        if file:
-            filename = "uploaded_audio.wav"
-            file.save(filename)
+        audio_id = request.form['audio_id']
+        try:
+            audio_data = fs.get(audio_id)
+            with open("uploaded_audio.wav", "wb") as f:
+                f.write(audio_data.read())
 
             # Transcribe using Whisper
             base_model = whisper.load_model("base")
-            result = base_model.transcribe(filename)
+            result = base_model.transcribe("uploaded_audio.wav")
             transcription = result["text"]
+
+        except Exception as e:
+            print(e)
+            return 'Error processing the file', 500
 
     return render_template('webpage.html', transcription=transcription)
 
