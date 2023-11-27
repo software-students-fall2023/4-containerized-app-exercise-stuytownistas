@@ -1,12 +1,17 @@
 import os
 import pytest
 from unittest.mock import patch, Mock
-from whisper_module import base_model
+import whisper
+
+base_model = whisper.load_model("base")
 
 def test_transcribe_success():
+    # Mock the whisper.load_model function
     with patch('whisper.load_model', return_value=Mock(transcribe=Mock(return_value={"text": "Test transcription"}))):
-        result = base_model.transcribe("uploaded_audio.wav")
+        # Call the transcribe method with a test file
+        result = base_model.transcribe("web_app/uploaded_audio.wav")
     
+    # Assert that the result matches the expected output
     assert result == {"text": "Test transcription"}
 
 def test_transcribe_failure():
