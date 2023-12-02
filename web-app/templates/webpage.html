@@ -38,7 +38,7 @@
             document.getElementById("startRecord").disabled = false;
         };
 
-         document.getElementById("submitAudio").onclick = function () {
+        document.getElementById("submitAudio").onclick = function () {
             const audioElement = document.getElementById("audioPlayback");
             fetch(audioElement.src)
                 .then(response => response.blob())

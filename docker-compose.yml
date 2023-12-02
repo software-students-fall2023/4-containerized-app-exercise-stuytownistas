@@ -8,6 +8,8 @@ services:
       - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: stuyTownistas
+    # volumes:
+    #   - mongodb-data:/data/db
 
   flask-app:
     build:
@@ -19,3 +21,10 @@ services:
       - mongodb
     environment:
       MONGO_URI: "mongodb://mongodb:27017/stuyTownistas"
+
+  # ml-client:
+  #   build: ./machine-learning-client
+  #   depends_on:
+  #     - mongodb
+  #   environment:
+  #     MONGO_URI: "mongodb://mongodb:27017/stuyTownistas"
