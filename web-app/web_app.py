@@ -5,7 +5,8 @@ import io
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import traceback
-
+import tempfile
+import os
 
 # MongoDB URI and Connection
 mongo_uri = "mongodb://mongodb:27017/stuyTownistas"
@@ -21,33 +22,32 @@ def upload():
     audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
     return jsonify({'audio_id': str(audio_id)})
 
-
 @app.route('/get_audio/<audio_id>')
 def get_audio(audio_id):
     try:
         audio_data = fs.get(ObjectId(audio_id))
         return send_file(io.BytesIO(audio_data.read()), mimetype='audio/wav', as_attachment=True, download_name='uploaded_audio.wav')
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/transcribe/<audio_id>')
 def transcribe_audio(audio_id):
     try:
-        audio_data = fs.get(audio_id)
-        with open("temp_uploaded_audio.wav", "wb") as f:
+        audio_data = fs.get(ObjectId(audio_id))
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+            temp_audio_path = f.name
             f.write(audio_data.read())
 
         # Transcribe using Whisper
         base_model = whisper.load_model("base")
-        result = base_model.transcribe("temp_uploaded_audio.wav")
+        result = base_model.transcribe(temp_audio_path)
         transcription = result["text"]
+        os.remove(temp_audio_path)  # Clean up the temp file
         return jsonify({'transcription': transcription})
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-
 
 
 @app.route('/', methods=['GET', 'POST'])
