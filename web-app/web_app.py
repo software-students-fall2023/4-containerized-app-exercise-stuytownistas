@@ -31,10 +31,32 @@ def get_audio(audio_id):
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+# @app.route('/transcribe/<audio_id>')
+# def transcribe_audio(audio_id):
+#     try:
+#         audio_data = fs.get(ObjectId(audio_id))
+#         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+#             temp_audio_path = f.name
+#             f.write(audio_data.read())
+
+#         # Transcribe using Whisper
+#         base_model = whisper.load_model("base")
+#         result = base_model.transcribe(temp_audio_path)
+#         transcription = result["text"]
+#         os.remove(temp_audio_path)  # Clean up the temp file
+#         return jsonify({'transcription': transcription})
+#     except Exception as e:
+#         traceback.print_exc()
+#         return jsonify({'error': str(e)}), 500
+
 @app.route('/transcribe/<audio_id>')
 def transcribe_audio(audio_id):
+    temp_audio_path = None
     try:
+        # Retrieve the audio file from GridFS
         audio_data = fs.get(ObjectId(audio_id))
+
+        # Create a temporary file to store the audio for transcription
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
             temp_audio_path = f.name
             f.write(audio_data.read())
@@ -43,12 +65,15 @@ def transcribe_audio(audio_id):
         base_model = whisper.load_model("base")
         result = base_model.transcribe(temp_audio_path)
         transcription = result["text"]
-        os.remove(temp_audio_path)  # Clean up the temp file
+
         return jsonify({'transcription': transcription})
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-
+    finally:
+        # Clean up the temp file if it was created
+        if temp_audio_path and os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
