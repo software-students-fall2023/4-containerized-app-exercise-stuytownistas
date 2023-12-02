@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template, send_file, flash, redirect
 import whisper
 from gridfs import GridFS
 import io
@@ -6,6 +6,7 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 import traceback
 import tempfile
+import requests
 import os
 
 # MongoDB URI and Connection
@@ -16,11 +17,38 @@ fs = GridFS(db)
 
 app = Flask(__name__)
 
+# @app.route('/upload', methods=['POST'])
+# def upload():
+#     audio_blob = request.files['file']
+#     audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
+#     return jsonify({'audio_id': str(audio_id)})
+
+
 @app.route('/upload', methods=['POST'])
 def upload():
-    audio_blob = request.files['file']
-    audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
-    return jsonify({'audio_id': str(audio_id)})
+    if "file" not in request.files:
+        flash("No file part")
+        return redirect(request.url)
+    file = request.files["file"]
+
+    if file.filename == "":
+        flash("No selected file")
+        return redirect(request.url)
+
+    file.save(os.path.join(app.config["uploads"], file.filename))
+    # or temp api url
+    res = requests.post(
+        "http://localhost:5002/api",
+        data=file.read(),
+        headers={"Content-Type": file.content_type},
+        timeout=20,
+    )
+
+    if res.status_code == 200:
+        return res.json()
+    # audio_blob = request.files['file']
+    # audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
+    # return jsonify({'audio_id': str(audio_id)})
 
 @app.route('/get_audio/<audio_id>')
 def get_audio(audio_id):

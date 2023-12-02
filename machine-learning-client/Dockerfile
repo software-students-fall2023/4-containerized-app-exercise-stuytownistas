@@ -1,12 +1,22 @@
 	# in Docker, it is common to base a new image on a previously-created image
-	FROM python:3.10
+	FROM python:3.8-slim
 	
 	# Set the working directory in the image
-	# WORKDIR /welcome
+	WORKDIR /machine-learning-client
 	
-	# the ADD command is how you add files from your local machine into a Docker image
+
+	RUN apt-get update && \
+    apt-get install -y ffmpeg
+
 	# Copy the current directory contents into the container at /app
-	ADD . .
-	
+	COPY . /machine-learning-client
+
+
+	# Install any needed packages specified in requirements.txt
+	RUN pip install --no-cache-dir -r requirements.txt
+
+	# Make port 5002 available to the world outside this container
+	EXPOSE 5002
+
 	# Run app.py when the container launches
-	CMD ["pipenv", "run", "python", "whisper_model.py"]
+	CMD ["python", "whisper_model.py"]

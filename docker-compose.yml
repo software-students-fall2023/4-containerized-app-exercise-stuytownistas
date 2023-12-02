@@ -19,3 +19,14 @@ services:
       - mongodb
     environment:
       MONGO_URI: "mongodb://mongodb:27017/stuyTownistas"
+
+  ml-app:
+    build:
+      context: ./machine-learning-client
+    container_name: my-ml-app-container
+    ports:
+      - "5002:5002"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: "mongodb://mongodb:27017/stuyTownistas"
