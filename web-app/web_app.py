@@ -8,6 +8,8 @@ import traceback
 import tempfile
 import requests
 import os
+from werkzeug.utils import secure_filename
+
 
 # MongoDB URI and Connection
 mongo_uri = "mongodb://mongodb:27017/stuyTownistas"
@@ -22,33 +24,48 @@ app = Flask(__name__)
 #     audio_blob = request.files['file']
 #     audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
 #     return jsonify({'audio_id': str(audio_id)})
-
+uploads_dir = os.path.join(os.getcwd(), 'uploads')
+os.makedirs(uploads_dir, exist_ok=True)  # Ensure the directory exists
+app.config['UPLOAD_FOLDER'] = uploads_dir  # Corrected from 'uploads' to 'UPLOAD_FOLDER'
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    if "file" not in request.files:
+    if 'file' not in request.files:
         flash("No file part")
         return redirect(request.url)
-    file = request.files["file"]
+    file = request.files['file']
 
-    if file.filename == "":
+    if file.filename == '':
         flash("No selected file")
         return redirect(request.url)
 
-    file.save(os.path.join(app.config["uploads"], file.filename))
-    # or temp api url
-    res = requests.post(
-        "http://localhost:5002/api",
-        data=file.read(),
-        headers={"Content-Type": file.content_type},
-        timeout=20,
-    )
+    if file:  # if file is not empty
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)  # Corrected key to 'UPLOAD_FOLDER'
+        file.save(file_path)  # Save file to uploads directory
 
-    if res.status_code == 200:
-        return res.json()
-    # audio_blob = request.files['file']
-    # audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
-    # return jsonify({'audio_id': str(audio_id)})
+        # Assuming you want to save the file to GridFS as well
+        with open(file_path, 'rb') as f:
+            audio_id = fs.put(f, filename=filename, content_type='audio/wav')
+        
+        # If you need to send the file to another API
+        # (Uncomment and adjust the following block if needed)
+        # with open(file_path, 'rb') as f:
+        #     res = requests.post(
+        #         "http://localhost:5002/api",
+        #         data=f.read(),
+        #         headers={"Content-Type": "audio/wav"},  # Assuming the file is a WAV file
+        #         timeout=20
+        #     )
+        # if res.status_code == 200:
+        #     return res.json()  # If the other API provides a JSON response
+        # else:
+        #     return jsonify({'error': 'Failed to process the file'}), res.status_code  # Handle non-200 responses
+        
+        # Return the audio_id in the response
+        return jsonify({'audio_id': str(audio_id)})
+    else:
+        return jsonify({'error': 'Invalid file'}), 400
 
 @app.route('/get_audio/<audio_id>')
 def get_audio(audio_id):
