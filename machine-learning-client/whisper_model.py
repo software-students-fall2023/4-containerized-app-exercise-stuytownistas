@@ -33,7 +33,6 @@ def transcribe_audio():
 
     if not whisper_request:
         raise ValueError("No file provided for transcription.")
-    
     result = base_model.transcribe(whisper_request)
     transcription = result["text"]
     save = {"transcription": transcription}

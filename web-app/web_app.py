@@ -61,11 +61,10 @@ def upload():
         # if res.status_code == 200:
         #     return res.json()  # If the other API provides a JSON response
         # else:
-        #     return jsonify({'error': 
+        #     return jsonify({'error':
         # 'Failed to process the file'}), res.status_code  # Handle non-200 responses
         # Return the audio_id in the response
         return jsonify({'audio_id': str(audio_id)})
-    
     return jsonify({'error': 'Invalid file'}), 400
 
 @app.route('/get_audio/<audio_id>')
@@ -73,7 +72,7 @@ def get_audio(audio_id):
     '''Retrieves the audio file from the server.'''
     try:
         audio_data = fs.get(ObjectId(audio_id))
-        return send_file(io.BytesIO(audio_data.read()), mimetype='audio/wav', 
+        return send_file(io.BytesIO(audio_data.read()), mimetype='audio/wav',
                          as_attachment=True, download_name='uploaded_audio.wav')
     except FileNotFoundError as e:
         traceback.print_exc()
