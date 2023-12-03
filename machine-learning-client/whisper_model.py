@@ -12,14 +12,14 @@ from flask_cors import CORS
 
 MONGO_URI = "mongodb://mongodb:27017/stuyTownistas"
 client = MongoClient(MONGO_URI)
-db = client.get_database('whisper_db')
+db = client.get_database("whisper_db")
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-@app.route('/api/', methods=['POST'])
+@app.route("/api/", methods=['POST'])
 def transcribe_audio():
-    '''Transcribes the audio file sent to the server.'''
+    """Transcribes the audio file sent to the server."""
     # audio_blob = request.files['file']
     # audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
     # return jsonify({'audio_id': str(audio_id)})
