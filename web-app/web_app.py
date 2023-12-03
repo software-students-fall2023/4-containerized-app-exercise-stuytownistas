@@ -8,6 +8,7 @@ import whisper
 from gridfs import GridFS
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+
 # import requests
 from werkzeug.utils import secure_filename
 
@@ -78,9 +79,9 @@ def get_audio(audio_id):
         audio_data = fs.get(ObjectId(audio_id))
         return send_file(
             io.BytesIO(audio_data.read()),
-              mimetype="audio/wav",
-              as_attachment=True,
-              download_name="uploaded_audio.wav"
+            mimetype="audio/wav",
+            as_attachment=True,
+            download_name="uploaded_audio.wav"
         )
     except FileNotFoundError as e:
         traceback.print_exc()

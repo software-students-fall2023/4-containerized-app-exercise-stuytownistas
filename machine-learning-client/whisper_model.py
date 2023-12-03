@@ -17,6 +17,7 @@ db = client.get_database("whisper_db")
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+
 @app.route("/api/", methods=["POST"])
 def transcribe_audio():
     """Transcribes the audio file sent to the server."""
