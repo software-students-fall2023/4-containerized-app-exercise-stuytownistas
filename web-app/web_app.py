@@ -49,7 +49,6 @@ def upload():
         # Assuming you want to save the file to GridFS as well
         with open(file_path, 'rb') as f:
             audio_id = fs.put(f, filename=filename, content_type='audio/wav')
-        
         # If you need to send the file to another API
         # (Uncomment and adjust the following block if needed)
         # with open(file_path, 'rb') as f:
@@ -64,7 +63,6 @@ def upload():
         # else:
         #     return jsonify({'error': 
         # 'Failed to process the file'}), res.status_code  # Handle non-200 responses
-        
         # Return the audio_id in the response
         return jsonify({'audio_id': str(audio_id)})
     

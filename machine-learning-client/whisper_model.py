@@ -5,7 +5,6 @@ import whisper
 from flask import Flask, request
 from pymongo.mongo_client import MongoClient
 from flask_cors import CORS
-import requests
 
 # base_model = whisper.load_model("base")
 # result = base_model.transcribe("/Users/wayne/Desktop/Hikaru Takes The Juicer-UfAV4mpJn6A.wav")
@@ -25,7 +24,6 @@ def transcribe_audio():
     # audio_id = fs.put(audio_blob, filename='uploaded_audio.wav', content_type='audio/wav')
     # return jsonify({'audio_id': str(audio_id)})
     base_model = whisper.load_model("base")
-    # result = 
     files = request.files
 
     if "file" in files:
