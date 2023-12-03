@@ -1,19 +1,20 @@
+'''Web app for Project 4'''
+import io
+import traceback
+import tempfile
+import os
 from flask import Flask, request, jsonify, render_template, send_file, flash, redirect
 import whisper
 from gridfs import GridFS
-import io
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-import traceback
-import tempfile
-import requests
-import os
+# import requests
 from werkzeug.utils import secure_filename
 
 
 # MongoDB URI and Connection
-mongo_uri = "mongodb://mongodb:27017/stuyTownistas"
-client = MongoClient(mongo_uri)
+MONGO_URI = "mongodb://mongodb:27017/stuyTownistas"
+client = MongoClient(MONGO_URI)
 db = client.get_database('whisper_db')
 fs = GridFS(db)
 
@@ -30,6 +31,7 @@ app.config['UPLOAD_FOLDER'] = uploads_dir  # Corrected from 'uploads' to 'UPLOAD
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    '''Uploads the audio file to the server.'''
     if 'file' not in request.files:
         flash("No file part")
         return redirect(request.url)
@@ -41,7 +43,7 @@ def upload():
 
     if file:  # if file is not empty
         filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)  # Corrected key to 'UPLOAD_FOLDER'
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)  #  key to 'UPLOAD_FOLDER'
         file.save(file_path)  # Save file to uploads directory
 
         # Assuming you want to save the file to GridFS as well
@@ -60,19 +62,22 @@ def upload():
         # if res.status_code == 200:
         #     return res.json()  # If the other API provides a JSON response
         # else:
-        #     return jsonify({'error': 'Failed to process the file'}), res.status_code  # Handle non-200 responses
+        #     return jsonify({'error': 
+        # 'Failed to process the file'}), res.status_code  # Handle non-200 responses
         
         # Return the audio_id in the response
         return jsonify({'audio_id': str(audio_id)})
-    else:
-        return jsonify({'error': 'Invalid file'}), 400
+    
+    return jsonify({'error': 'Invalid file'}), 400
 
 @app.route('/get_audio/<audio_id>')
 def get_audio(audio_id):
+    '''Retrieves the audio file from the server.'''
     try:
         audio_data = fs.get(ObjectId(audio_id))
-        return send_file(io.BytesIO(audio_data.read()), mimetype='audio/wav', as_attachment=True, download_name='uploaded_audio.wav')
-    except Exception as e:
+        return send_file(io.BytesIO(audio_data.read()), mimetype='audio/wav', 
+                         as_attachment=True, download_name='uploaded_audio.wav')
+    except FileNotFoundError as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
@@ -96,6 +101,7 @@ def get_audio(audio_id):
 
 @app.route('/transcribe/<audio_id>')
 def transcribe_audio(audio_id):
+    '''Transcribes the audio file sent to the server.'''
     temp_audio_path = None
     try:
         # Retrieve the audio file from GridFS
@@ -112,7 +118,7 @@ def transcribe_audio(audio_id):
         transcription = result["text"]
 
         return jsonify({'transcription': transcription})
-    except Exception as e:
+    except FileNotFoundError as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
     finally:
@@ -122,6 +128,7 @@ def transcribe_audio(audio_id):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    '''Renders the webpage.'''
     transcription = ''
     if request.method == 'POST':
         audio_id = request.form['audio_id']
@@ -135,7 +142,7 @@ def index():
             result = base_model.transcribe("uploaded_audio.wav")
             transcription = result["text"]
 
-        except Exception as e:
+        except FileNotFoundError as e:
             print(e)
             return 'Error processing the file', 500
 
