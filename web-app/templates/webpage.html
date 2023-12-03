@@ -38,23 +38,34 @@
             document.getElementById("startRecord").disabled = false;
         };
 
-         document.getElementById("submitAudio").onclick = function () {
-            const audioElement = document.getElementById("audioPlayback");
-            fetch(audioElement.src)
-                .then(response => response.blob())
-                .then(blob => {
-                    const formData = new FormData();
-                    formData.append("file", blob, "audio.wav");
+        document.getElementById("submitAudio").onclick = function () {
+    const audioElement = document.getElementById("audioPlayback");
+    fetch(audioElement.src)
+        .then(response => response.blob())
+        .then(blob => {
+            const formData = new FormData();
+            formData.append("file", blob, "audio.wav");
 
-                    fetch("/upload", { method: "POST", body: formData })
+            fetch("/upload", { method: "POST", body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    // Fetch the transcription using the audio_id
+                    fetch("/transcribe/" + data.audio_id)
                         .then(response => response.json())
-                        .then(data => {
-                            // Display the transcription on the webpage
-                            document.getElementById("transcriptionResult").innerText = "Transcription: " + data.transcription;
-                        })
-                        .catch(error => console.error("Error:", error));
-                });
-        };
+                        .then(transcriptionData => {
+                            if(transcriptionData.error){
+                                console.error("Error:", transcriptionData.error);
+                                document.getElementById("transcriptionResult").innerText = "Error: " + transcriptionData.error;
+                            } else {
+                                // Display the transcription on the webpage
+                                document.getElementById("transcriptionResult").innerText = "Transcription: " + transcriptionData.transcription;
+                            }
+                        });
+                })
+                .catch(error => console.error("Error:", error));
+        });
+};
+
     </script>
 </body>
 </html>
