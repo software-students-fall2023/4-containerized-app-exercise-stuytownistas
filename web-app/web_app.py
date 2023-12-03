@@ -81,7 +81,7 @@ def get_audio(audio_id):
             io.BytesIO(audio_data.read()),
             mimetype="audio/wav",
             as_attachment=True,
-            download_name="uploaded_audio.wav"
+            download_name="uploaded_audio.wav",
         )
     except FileNotFoundError as e:
         traceback.print_exc()
