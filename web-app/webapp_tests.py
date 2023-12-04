@@ -3,55 +3,51 @@ import io
 import tempfile
 import pytest
 from flask import Flask, request, jsonify
-from web_app import app, fs  # Import your Flask app and GridFS instance
+from app import app, fs  # Import your Flask app and GridFS instance
 
-@pytest.fixture
+@pytest.fsixture
 def client():
     app.config['TESTING'] = True
     with app.test_client() as client:
         yield client
 
+def test_upload(client):
+    data = {'file': (io.BytesIO(b"dummy content"), 'test.wav')}
+    response = client.post('/upload', data=data, content_type='multipart/form-data')
+
+    assert response.status_code == 200
+    assert 'audio_id' in response.json
+
+def test_get_audio(client):
+    # Assuming you have an audio file already uploaded for testing
+    audio_data = b"dummy audio content"
+    audio_id = fs.put(audio_data, filename='test_audio.wav', content_type='audio/wav')
+
+    response = client.get(f'/get_audio/{str(audio_id)}')
+
+    assert response.status_code == 200
+    assert response.mimetype == 'audio/wav'
+    assert response.headers['Content-Disposition'] == 'attachment; filename=uploaded_audio.wav'
+    assert response.data == audio_data
+
+def test_transcribe_audio(client):
+    # Assuming you have an audio file already uploaded for testing
+    audio_data = b"dummy audio content"
+    audio_id = fs.put(audio_data, filename='test_audio.wav', content_type='audio/wav')
+
+    response = client.get(f'/transcribe/{str(audio_id)}')
+
+    assert response.status_code == 200
+    assert 'transcription' in response.json
+
 def test_index(client):
-    """
-    Test the index route.
-    """
-    response = client.get("/")
-    assert response.status_code == 200  
+    # Assuming you have an audio file already uploaded for testing
+    audio_data = b"dummy audio content"
+    audio_id = fs.put(audio_data, filename='test_audio.wav', content_type='audio/wav')
 
-def test_transcribe_audio(client, monkeypatch):
-    # Mocking whisper.load_model to avoid actual transcription in the test
-    def mock_load_model(*args, **kwargs):
-        class MockModel:
-            def transcribe(self, audio_path):
-                return {"text": "Mocked transcription"}
-
-        return MockModel()
-
-    monkeypatch.setattr('whisper.load_model', mock_load_model)
-
-    # Create a temporary audio file
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        temp_audio_path = f.name
-        f.write(b'Test audio content')
-
-    # Mocking GridFS get method to return some data
-    class MockGridFSFile:
-        def read(self):
-            return b'Test audio content'
-
-    def mock_gridfs_get(audio_id):
-        return MockGridFSFile()
-
-    monkeypatch.setattr(fs, 'get', mock_gridfs_get)
-
-    # Make a request to the route
-    response = client.get('/transcribe/123')
+    data = {'audio_id': str(audio_id)}
+    response = client.post('/', data=data)
 
     # Assert the response
     assert response.status_code == 200
-    data = response.get_json()
-    assert 'transcription' in data
-    assert data['transcription'] == 'Mocked transcription'
-
-    # Clean up the temporary audio file
-    os.remove(temp_audio_path)
+    assert 'Error processing the file' not in response.get_data(as_text=True)
