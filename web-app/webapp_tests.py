@@ -1,13 +1,14 @@
+'''tests for web app'''
 import os
 import io
 import tempfile
 import pytest
-from flask import Flask, request, jsonify
 import whisper
 from web_app import app, fs  # Import your Flask app and GridFS instance
 
 @pytest.fixture
 def client():
+    '''mock client for flask'''
     app.config['TESTING'] = True
     with app.test_client() as client:
         yield client
@@ -17,13 +18,15 @@ def test_index(client):
     Test the index route.
     """
     response = client.get("/")
-    assert response.status_code == 200  
+    assert response.status_code == 200
 
 def test_transcribe_audio(client, monkeypatch):
-    # Mocking whisper.load_model to avoid actual transcription in the test
+    """ Mocking whisper.load_model to avoid actual transcription in the test"""
     def mock_load_model(*args, **kwargs):
         class MockModel:
+            """mock model"""
             def transcribe(self, audio_path):
+                """"transcribes the mock"""
                 return {"text": "Mocked transcription"}
 
         return MockModel()
