@@ -10,6 +10,7 @@ openai-whisper = "*"
 ffmpeg = "*"
 flask = "*"
 pymongo = "*"
+flask-cors = "*"
 
 [dev-packages]
 
