@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Record Audio</title>
+</head>
+<body>
+    <h1>Record or Upload Audio</h1>
+    <button id="startRecord">Start Recording</button>
+    <button id="stopRecord" disabled>Stop Recording</button>
+    <audio id="audioPlayback" controls></audio>
+    <input type="file" id="audioUpload" accept="audio/*">
+    <button id="submitAudio">Submit Audio</button>
+    <div id="transcriptionResult"></div> <!-- Added div to display the transcription -->
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById("startRecord").onclick = function () {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = e => {
+                        const audioBlob = new Blob(audioChunks);
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        document.getElementById("audioPlayback").src = audioUrl;
+                    };
+                    mediaRecorder.start();
+                    document.getElementById("startRecord").disabled = true;
+                    document.getElementById("stopRecord").disabled = false;
+                });
+        };
+
+        document.getElementById("stopRecord").onclick = function () {
+            mediaRecorder.stop();
+            document.getElementById("stopRecord").disabled = true;
+            document.getElementById("startRecord").disabled = false;
+        };
+
+        document.getElementById("submitAudio").onclick = function () {
+    const audioElement = document.getElementById("audioPlayback");
+    fetch(audioElement.src)
+        .then(response => response.blob())
+        .then(blob => {
+            const formData = new FormData();
+            formData.append("file", blob, "audio.wav");
+
+            fetch("/upload", { method: "POST", body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    // Fetch the transcription using the audio_id
+                    fetch("/transcribe/" + data.audio_id)
+                        .then(response => response.json())
+                        .then(transcriptionData => {
+                            if(transcriptionData.error){
+                                console.error("Error:", transcriptionData.error);
+                                document.getElementById("transcriptionResult").innerText = "Error: " + transcriptionData.error;
+                            } else {
+                                // Display the transcription on the webpage
+                                document.getElementById("transcriptionResult").innerText = "Transcription: " + transcriptionData.transcription;
+                            }
+                        });
+                })
+                .catch(error => console.error("Error:", error));
+        });
+};
+
+    </script>
+</body>
+</html>
