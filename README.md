@@ -11,3 +11,5 @@
 1. run `cd web-app`
 
 1. run `docker-compose up --build`
+
+DockerHub File: https://hub.docker.com/repository/docker/lukedocker12/stuytownistas/general
